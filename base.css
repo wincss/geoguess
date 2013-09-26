@@ -1,0 +1,5 @@
+body, html {width: 100%;height: 100%;overflow: hidden;margin:0;}
+
+#panoframe {width: 60%; height: 100%; float: left; margin: 0;}
+#mapframe {width: 39%; height: 60%; float: right; border: 0; margin: 0; padding: 10px 0 0 5px;}
+#guessframe {width: 39%; height: 39%; float: right; border: 0; margin: 0; padding: 10px 0 0 5px;}

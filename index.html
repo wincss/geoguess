@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<title>猜地点</title>
+<link rel="stylesheet" href="base.css" />
+<script charset="utf-8" src="http://map.soso.com/api/v2/main.js?libraries=convertor,geometry&key=9daba4c757acf1ca4a2085f56b6e9682"></script>
+</head>
+<body>
+<div id="panoframe"></div>
+<div id="mapframe"></div>
+<div id="guessframe">
+<p>
+    <input type="button" id="changepano" value="换个地方">
+    <input type="button" id="answer" value="直接看答案">
+    <input type="button" id="share" value="分享给好友">
+</p>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="util.js"></script>
+<script type="text/javascript" src="ZeroClipboard.js"></script>
+<script type="text/javascript">
+// 初始化剪贴板控件
+var clip = new ZeroClipboard(document.getElementById('share'));
+
+// 初始化一个空白街景
+var pano = new soso.maps.Panorama(document.getElementById('panoframe'), {
+    disableMove: true,
+    visible: false
+});
+var panoService = new soso.maps.PanoramaService();
+
+// 初始化地图
+var point = new soso.maps.LatLng(39.916527, 116.397128);
+var map = new soso.maps.Map(document.getElementById('mapframe'), {
+    zoom: 10,
+    center: point,
+    mapTypeId: soso.maps.MapTypeId.ROADMAP
+});
+var ansmak = new soso.maps.Marker({
+    map: map,
+    visible: false,
+    position: point
+});
+var usrimg = new soso.maps.MarkerImage('redmarker.png');
+var usrmak = new soso.maps.Marker({
+    map: map,
+    visible: true,
+    draggable: true,
+    position: point,
+    icon: usrimg
+});
+var svid;
+
+function changePano()
+{
+    // 北京大致范围：([40.05542, 116.71813],[39.73935, 115.89004])
+    // 随机在北京找一个点
+    var lat = 39.73935 + (40.05542 - 39.73935) * Math.random();
+    var lng = 115.89004 + (116.71813 - 115.89004) * Math.random();
+
+    var point = new soso.maps.LatLng(lat, lng);
+    panoService.getPano(point, 10000, function (panoLocation) {
+        if (!panoLocation) {
+            console.log('no pano!');
+            return;
+        }
+        svid = panoLocation.svid;
+        pano.setPano(svid);
+    });
+}
+
+function markAnswer()
+{
+    ansmak.setVisible(true);
+    usrmak.setDraggable(false);
+    map.flyTo(ansmak.getPosition(), 17);
+}
+function initPano()
+{
+    if (location.hash) {
+        // 如果有hash，没什么检验方法，只能相信了
+        svid = location.hash.substr(1);
+        pano.setPano(svid);
+    } else {
+        // 否则直接随机一个
+        changePano();
+    }
+}
+
+soso.maps.event.addListener(pano, 'position_changed', function() {
+    pano.setVisible(true);
+    ansmak.setPosition(pano.getPosition());
+    ansmak.setVisible(false);    
+    clip.setText(location.protocol + '//' + location.host + location.pathname + '#' + pano.getPano());
+    usrmak.setDraggable(true);
+    map.flyTo(usrmak.getPosition(), 12);
+});
+
+soso.maps.event.addListener(pano, 'error', function() {
+    changePano();
+});
+
+addEvent(document.getElementById('changepano'), 'click', changePano);
+addEvent(document.getElementById('answer'), 'click', markAnswer);
+
+
+window.setTimeout(initPano, 0);
+</script>
+</body>
+</html>
